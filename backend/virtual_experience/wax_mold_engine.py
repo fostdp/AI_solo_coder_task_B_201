@@ -474,17 +474,26 @@ def _calculate_surface_area(template_id: str, p: Dict[str, Any]) -> float:
 
 def _calculate_complexity_score(template_id: str, p: Dict[str, Any]) -> float:
     template = WAX_MOLD_TEMPLATES.get(template_id)
-    base = float(template["difficulty"] * 20) if template else 50.0
+    base = float(template["difficulty"] * 15) if template else 40.0
 
-    wt = p.get("wall_thickness", 5.0)
-    if wt < 3.0:
-        base += 15
+    wt = p.get("wall_thickness", p.get("thickness", 5.0))
+    if wt < 2.0:
+        base += 25
+    elif wt < 3.0:
+        base += 18
     elif wt < 4.0:
-        base += 8
+        base += 10
+    elif wt < 5.0:
+        base += 4
 
     pattern_count = p.get("pattern_count", 0)
     if pattern_count > 0:
-        base += min(20, pattern_count * 0.5)
+        base += min(25, pattern_count * 0.6)
+
+    h = p.get("height", 0)
+    d = p.get("diameter", p.get("width", 0))
+    if h > 0 and d > 0 and h / d > 1.8:
+        base += 8
 
     return min(100, base)
 
