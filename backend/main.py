@@ -18,6 +18,11 @@ from routers.websocket_v2 import router as ws_router
 from craft_comparison.router import router as craft_router
 from permeability_analysis.router import router as permeability_router
 from virtual_experience.router import router as virtual_router
+from process_comparator.router import router as process_comparator_router
+from era_comparator.router import router as era_comparator_router
+from permeability_analyzer.router import router as permeability_analyzer_router
+from vr_lost_wax.router import router as vr_lost_wax_router
+from cfd_worker.router import router as cfd_worker_router
 from orchestrator_v2 import orchestrator
 from dtu_receiver.mqtt_receiver import mqtt_receiver
 
@@ -70,14 +75,21 @@ async def root():
             "craft_comparison",
             "permeability_analysis",
             "virtual_experience",
+            "process_comparator",
+            "era_comparator",
+            "permeability_analyzer",
+            "vr_lost_wax",
+            "cfd_worker",
         ],
         "communication": "Redis Pub/Sub + MQTT",
-        "version": "2.2.0",
+        "version": "2.3.0",
         "new_features": [
             "古代铸造工艺缺陷率对比",
             "古今熔模铸造精度对比",
             "型壳透气性影响分析",
             "公众虚拟蜡模设计与浇铸体验",
+            "模块化重构：process_comparator, era_comparator, permeability_analyzer, vr_lost_wax",
+            "CFD独立Worker进程架构",
         ],
     }
 
@@ -134,6 +146,11 @@ app.include_router(ws_router)
 app.include_router(craft_router)
 app.include_router(permeability_router)
 app.include_router(virtual_router)
+app.include_router(process_comparator_router)
+app.include_router(era_comparator_router)
+app.include_router(permeability_analyzer_router)
+app.include_router(vr_lost_wax_router)
+app.include_router(cfd_worker_router)
 
 if __name__ == "__main__":
     import uvicorn

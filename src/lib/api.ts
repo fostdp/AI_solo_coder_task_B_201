@@ -398,3 +398,112 @@ export const virtualApi = {
       body: JSON.stringify(experiment),
     }),
 };
+
+export const processComparatorApi = {
+  getAncientCrafts: () => request<CraftInfo[]>("/api/process-comparator/ancient"),
+  getModernCrafts: () => request<CraftInfo[]>("/api/process-comparator/modern"),
+  getAllCrafts: () => request<CraftInfo[]>("/api/process-comparator/all"),
+  getCraftDetail: (id: string) => request<CraftInfo>(`/api/process-comparator/${id}`),
+  compareCrafts: (ids: string[]) =>
+    request<ComparisonResult>(`/api/process-comparator/compare?craft_ids=${ids.join(",")}`),
+  calculateDefectRate: (craftId: string, pouringTemp: number, permeability: number, alloyType = "bronze") =>
+    request("/api/process-comparator/calculate-defect-rate", {
+      method: "POST",
+      body: JSON.stringify({
+        craft_id: craftId,
+        pouring_temp: pouringTemp,
+        shell_permeability: permeability,
+        alloy_type: alloyType,
+      }),
+    }),
+};
+
+export const eraComparatorApi = {
+  listEras: () => request<any[]>("/api/era-comparator/eras"),
+  getEra: (id: string) => request<any>(`/api/era-comparator/eras/${id}`),
+  getAncientVsModern: () => request<AncientVsModernResult>("/api/era-comparator/ancient-vs-modern"),
+};
+
+export const permeabilityAnalyzerApi = {
+  analyzeImpact: (alloyType = "bronze", pouringTemp = 1180, shellThickness = 9) =>
+    request<PermeabilityImpactResult>(
+      `/api/permeability-analyzer/impact?alloy_type=${alloyType}&pouring_temp=${pouringTemp}&shell_thickness=${shellThickness}`
+    ),
+  analyzeHistorical: (castingId: string) =>
+    request(`/api/permeability-analyzer/historical/${castingId}`),
+  compareScenarios: (scenarios: any[]) =>
+    request("/api/permeability-analyzer/compare", {
+      method: "POST",
+      body: JSON.stringify({ scenarios }),
+    }),
+};
+
+export const vrLostWaxApi = {
+  getTemplates: (audience?: string, category?: string) => {
+    let url = "/api/vr-lost-wax/templates";
+    const params = new URLSearchParams();
+    if (audience) params.set("audience", audience);
+    if (category) params.set("category", category);
+    const qs = params.toString();
+    if (qs) url += `?${qs}`;
+    return request<WaxMoldTemplate[]>(url);
+  },
+  getTemplate: (id: string) => request<WaxMoldTemplate>(`/api/vr-lost-wax/templates/${id}`),
+  getMaterials: () => request<CastingMaterial[]>("/api/vr-lost-wax/materials"),
+  getShells: () => request<ShellMaterial[]>("/api/vr-lost-wax/shell-materials"),
+  getSimpleModePresets: () => request<any[]>("/api/vr-lost-wax/simple-mode/presets"),
+  getSimpleModeParams: () => request<any>("/api/vr-lost-wax/simple-mode/params"),
+  applySimpleMode: (templateId: string, sizeLevel: number, ornamentLevel: number, thicknessLevel: number) =>
+    request("/api/vr-lost-wax/simple-mode/apply", {
+      method: "POST",
+      body: JSON.stringify({
+        template_id: templateId,
+        size_level: sizeLevel,
+        ornament_level: ornamentLevel,
+        thickness_level: thicknessLevel,
+      }),
+    }),
+  applyPreset: (templateId: string, presetId: string) =>
+    request("/api/vr-lost-wax/simple-mode/preset", {
+      method: "POST",
+      body: JSON.stringify({ template_id: templateId, preset_id: presetId }),
+    }),
+  generateGeometry: (templateId: string, params: Record<string, any>) =>
+    request<GeometryResult>("/api/vr-lost-wax/geometry", {
+      method: "POST",
+      body: JSON.stringify({ template_id: templateId, params }),
+    }),
+  simulateCasting: (templateId: string, params: Record<string, any>, materialId: string, shellId: string, pouringTemp?: number) =>
+    request<SimulationResult>("/api/vr-lost-wax/simulate", {
+      method: "POST",
+      body: JSON.stringify({
+        template_id: templateId,
+        params,
+        material_id: materialId,
+        shell_id: shellId,
+        pouring_temp: pouringTemp,
+      }),
+    }),
+  getExperiments: (limit = 20) =>
+    request(`/api/vr-lost-wax/experiments?limit=${limit}`),
+  getExperiment: (id: string) => request(`/api/vr-lost-wax/experiments/${id}`),
+};
+
+export const cfdWorkerApi = {
+  submitSimulation: (params: Record<string, any>) =>
+    request("/api/cfd-worker/submit", {
+      method: "POST",
+      body: JSON.stringify(params),
+    }),
+  getJobStatus: (jobId: string) => request(`/api/cfd-worker/jobs/${jobId}/status`),
+  getJobResult: (jobId: string) => request(`/api/cfd-worker/jobs/${jobId}/result`),
+  cancelJob: (jobId: string) =>
+    request(`/api/cfd-worker/jobs/${jobId}`, { method: "DELETE" }),
+  listJobs: (limit = 50) => request(`/api/cfd-worker/jobs?limit=${limit}`),
+  getStats: () => request("/api/cfd-worker/stats"),
+  runSync: (params: Record<string, any>) =>
+    request("/api/cfd-worker/run-sync", {
+      method: "POST",
+      body: JSON.stringify(params),
+    }),
+};
