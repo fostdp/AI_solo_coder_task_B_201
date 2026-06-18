@@ -5,6 +5,9 @@ import SimulationView from "@/pages/SimulationView";
 import DefectsPage from "@/pages/DefectsPage";
 import AlertsPage from "@/pages/AlertsPage";
 import HistoryPage from "@/pages/HistoryPage";
+import CraftComparison from "@/pages/CraftComparison";
+import PermeabilityAnalysis from "@/pages/PermeabilityAnalysis";
+import VirtualExperience from "@/pages/VirtualExperience";
 
 export default function App() {
   return (
@@ -18,6 +21,9 @@ export default function App() {
             <Route path="/defects" element={<DefectsPage />} />
             <Route path="/alerts" element={<AlertsPage />} />
             <Route path="/history" element={<HistoryPage />} />
+            <Route path="/craft-comparison" element={<CraftComparison />} />
+            <Route path="/permeability" element={<PermeabilityAnalysis />} />
+            <Route path="/virtual" element={<VirtualExperience />} />
           </Routes>
         </main>
       </div>

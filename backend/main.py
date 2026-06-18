@@ -15,6 +15,9 @@ from defect_predictor.router import router as defects_router
 from alarm_ws.router import router as alerts_router
 from routers.castings_v2 import router as castings_router
 from routers.websocket_v2 import router as ws_router
+from craft_comparison.router import router as craft_router
+from permeability_analysis.router import router as permeability_router
+from virtual_experience.router import router as virtual_router
 from orchestrator_v2 import orchestrator
 from dtu_receiver.mqtt_receiver import mqtt_receiver
 
@@ -40,8 +43,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="古代失蜡法精密铸造充型仿真与缺陷预测系统",
-    description="曾侯乙尊盘失蜡法工艺复原研究数字化仿真平台",
-    version="2.1.0",
+    description="曾侯乙尊盘失蜡法工艺复原研究数字化仿真平台 - 含工艺对比、透气性分析、虚拟体验功能",
+    version="2.2.0",
     lifespan=lifespan,
 )
 
@@ -59,9 +62,23 @@ async def root():
     return {
         "status": "running",
         "name": "Lost Wax Casting Simulation System",
-        "modules": ["dtu_receiver", "filling_simulator", "defect_predictor", "alarm_ws"],
+        "modules": [
+            "dtu_receiver",
+            "filling_simulator",
+            "defect_predictor",
+            "alarm_ws",
+            "craft_comparison",
+            "permeability_analysis",
+            "virtual_experience",
+        ],
         "communication": "Redis Pub/Sub + MQTT",
-        "version": "2.1.0",
+        "version": "2.2.0",
+        "new_features": [
+            "古代铸造工艺缺陷率对比",
+            "古今熔模铸造精度对比",
+            "型壳透气性影响分析",
+            "公众虚拟蜡模设计与浇铸体验",
+        ],
     }
 
 
@@ -114,6 +131,9 @@ app.include_router(defects_router)
 app.include_router(alerts_router)
 app.include_router(castings_router)
 app.include_router(ws_router)
+app.include_router(craft_router)
+app.include_router(permeability_router)
+app.include_router(virtual_router)
 
 if __name__ == "__main__":
     import uvicorn

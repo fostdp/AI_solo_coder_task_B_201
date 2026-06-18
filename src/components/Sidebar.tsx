@@ -1,5 +1,15 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Box, TriangleAlert, AlertOctagon, History, Anvil } from "lucide-react";
+import {
+  LayoutDashboard,
+  Box,
+  TriangleAlert,
+  AlertOctagon,
+  History,
+  Anvil,
+  Scale,
+  Wind,
+  Sparkles,
+} from "lucide-react";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "监控仪表盘" },
@@ -7,6 +17,15 @@ const navItems = [
   { to: "/defects", icon: TriangleAlert, label: "缺陷预测" },
   { to: "/alerts", icon: AlertOctagon, label: "告警中心" },
   { to: "/history", icon: History, label: "历史回放" },
+];
+
+const researchNavItems = [
+  { to: "/craft-comparison", icon: Scale, label: "工艺对比" },
+  { to: "/permeability", icon: Wind, label: "透气分析" },
+];
+
+const experienceNavItems = [
+  { to: "/virtual", icon: Sparkles, label: "虚拟铸造" },
 ];
 
 export function Sidebar() {
@@ -21,7 +40,11 @@ export function Sidebar() {
           <div className="text-[10px] tracking-[0.2em] text-amber-500/70">LOST WAX CASTING</div>
         </div>
       </div>
-      <nav className="flex-1 space-y-1 p-3">
+
+      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+        <div className="mb-1 px-3 pt-1 text-[10px] font-medium uppercase tracking-[0.15em] text-amber-500/50">
+          专业功能
+        </div>
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
@@ -39,7 +62,52 @@ export function Sidebar() {
             <span className="font-medium tracking-wide">{label}</span>
           </NavLink>
         ))}
+
+        <div className="my-3 border-t border-amber-900/20" />
+
+        <div className="mb-1 px-3 pt-1 text-[10px] font-medium uppercase tracking-[0.15em] text-amber-500/50">
+          研究分析
+        </div>
+        {researchNavItems.map(({ to, icon: Icon, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) =>
+              `group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all ${
+                isActive
+                  ? "bg-gradient-to-r from-amber-700/30 to-amber-900/10 text-amber-200 shadow-[inset_2px_0_0_0_#d4af37]"
+                  : "text-amber-100/60 hover:bg-amber-900/15 hover:text-amber-200"
+              }`
+            }
+          >
+            <Icon className="h-4.5 w-4.5 shrink-0" />
+            <span className="font-medium tracking-wide">{label}</span>
+          </NavLink>
+        ))}
+
+        <div className="my-3 border-t border-amber-900/20" />
+
+        <div className="mb-1 px-3 pt-1 text-[10px] font-medium uppercase tracking-[0.15em] text-amber-500/50">
+          公众体验
+        </div>
+        {experienceNavItems.map(({ to, icon: Icon, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) =>
+              `group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all ${
+                isActive
+                  ? "bg-gradient-to-r from-purple-700/30 to-amber-900/10 text-amber-200 shadow-[inset_2px_0_0_0_#d4af37]"
+                  : "text-amber-100/60 hover:bg-amber-900/15 hover:text-amber-200"
+              }`
+            }
+          >
+            <Icon className="h-4.5 w-4.5 shrink-0" />
+            <span className="font-medium tracking-wide">{label}</span>
+          </NavLink>
+        ))}
       </nav>
+
       <div className="border-t border-amber-900/30 p-4">
         <div className="rounded-lg border border-amber-800/30 bg-black/40 p-3">
           <div className="mb-1 text-[10px] uppercase tracking-[0.15em] text-amber-500/60">工艺阶段</div>

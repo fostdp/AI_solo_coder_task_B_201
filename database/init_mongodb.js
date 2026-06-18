@@ -35,6 +35,13 @@ const collections = [
             },
         ],
     },
+    {
+        name: "virtual_experiments",
+        indexes: [
+            { key: { created_at: -1 }, name: "created_at_-1" },
+            { key: { template_id: 1 }, name: "template_id_1" },
+        ],
+    },
 ];
 
 collections.forEach((col) => {
