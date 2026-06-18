@@ -7,12 +7,18 @@ from virtual_experience.wax_mold_engine import (
     WAX_MOLD_TEMPLATES,
     CASTING_MATERIALS,
     SHELL_MATERIALS,
+    SIMPLE_MODE_PRESETS,
+    SIMPLE_MODE_PARAMS,
     get_wax_mold_templates,
     get_wax_mold_template,
     get_casting_materials,
     get_shell_materials,
     generate_model_geometry,
     simulate_casting,
+    apply_simple_mode_params,
+    apply_preset,
+    get_simple_mode_presets,
+    get_simple_mode_params,
 )
 from virtual_experience.service import virtual_service
 
@@ -29,6 +35,113 @@ class TestVirtualExperienceDesignFreedom:
             assert exp_id in ids, f"缺少模板: {exp_id}"
         assert len(templates) == 5
 
+    def test_simple_mode_presets_available(self):
+        """正常用例：简单模式预设全部可用"""
+        presets = get_simple_mode_presets()
+        assert len(presets) >= 4
+        preset_ids = [p["id"] for p in presets]
+        expected = ["delicate", "balanced", "grand", "intricate"]
+        for pid in expected:
+            assert pid in preset_ids, f"缺少预设: {pid}"
+        for preset in presets:
+            assert "name" in preset
+            assert "description" in preset
+            assert "icon" in preset
+            assert "scaling_factors" in preset
+
+    def test_simple_mode_params_defined(self):
+        """正常用例：简单模式参数定义完整"""
+        params = get_simple_mode_params()
+        assert "size" in params
+        assert "ornament" in params
+        assert "thickness" in params
+        for key, p in params.items():
+            assert p["min"] == 1
+            assert p["max"] == 5
+            assert p["default"] == 3
+            assert "label" in p
+            assert "hint" in p
+
+    def test_apply_preset_produces_different_results(self):
+        """正常用例：不同预设产生不同的参数组合"""
+        template_id = "zunpan"
+        params_delicate = apply_preset(template_id, "delicate")
+        params_grand = apply_preset(template_id, "grand")
+        assert "error" not in params_delicate
+        assert "error" not in params_grand
+        assert params_delicate["height"] < params_grand["height"], (
+            "精致模式应比宏大模式尺寸小"
+        )
+        assert params_delicate["wall_thickness"] < params_grand["wall_thickness"], (
+            "精致模式应比宏大模式壁薄"
+        )
+
+    def test_apply_simple_mode_size_scaling(self):
+        """边界用例：简单模式尺寸等级1和5产生显著差异"""
+        template_id = "ding"
+        params_small = apply_simple_mode_params(template_id, size_level=1)
+        params_large = apply_simple_mode_params(template_id, size_level=5)
+        assert "error" not in params_small
+        assert "error" not in params_large
+        assert params_small["height"] < params_large["height"]
+        assert params_small["diameter"] < params_large["diameter"]
+        size_ratio = params_large["height"] / params_small["height"]
+        assert 1.5 <= size_ratio <= 2.5, f"尺寸比例 {size_ratio:.2f} 应在 [1.5, 2.5] 范围"
+
+    def test_apply_simple_mode_ornament_scaling(self):
+        """边界用例：简单模式纹饰等级影响纹饰数量"""
+        template_id = "zunpan"
+        params_plain = apply_simple_mode_params(template_id, ornament_level=1)
+        params_intricate = apply_simple_mode_params(template_id, ornament_level=5)
+        assert "error" not in params_plain
+        assert "error" not in params_intricate
+        assert params_plain["pattern_count"] < params_intricate["pattern_count"], (
+            "低纹饰等级应比高纹饰等级有更少纹饰"
+        )
+        assert params_plain.get("has_dragons", True) == False, (
+            "素面模式应无龙形装饰"
+        )
+
+    def test_apply_simple_mode_thickness_scaling(self):
+        """边界用例：简单模式壁厚等级影响厚度"""
+        template_id = "hu"
+        params_thin = apply_simple_mode_params(template_id, thickness_level=1)
+        params_thick = apply_simple_mode_params(template_id, thickness_level=5)
+        assert "error" not in params_thin
+        assert "error" not in params_thick
+        assert params_thin["wall_thickness"] < params_thick["wall_thickness"]
+
+    def test_apply_simple_mode_invalid_template(self):
+        """异常用例：应用简单模式到不存在的模板返回错误"""
+        result = apply_simple_mode_params("nonexistent_template")
+        assert "error" in result
+
+    def test_apply_preset_invalid_ids(self):
+        """异常用例：应用不存在的预设返回错误"""
+        result = apply_preset("zunpan", "nonexistent_preset")
+        assert "error" in result
+        result = apply_preset("nonexistent_template", "delicate")
+        assert "error" in result
+
+    def test_templates_have_audience_classification(self):
+        """正常用例：模板按受众分级（beginner/all）"""
+        templates = get_wax_mold_templates()
+        audiences = set()
+        for t in templates:
+            assert "audience" in t
+            audiences.add(t["audience"])
+        assert "beginner" in audiences
+        assert "all" in audiences
+
+    def test_templates_have_expert_param_markers(self):
+        """正常用例：参数标记专家模式可见"""
+        template = get_wax_mold_template("zunpan")
+        pr = template["param_ranges"]
+        expert_count = sum(1 for p in pr.values() if p.get("expert_only", False))
+        normal_count = sum(1 for p in pr.values() if not p.get("expert_only", False))
+        assert expert_count >= 3, "专家参数不足"
+        assert normal_count >= 3, "普通参数不足"
+
     def test_each_template_has_param_ranges(self):
         """正常用例：每个模板都有参数范围定义"""
         for template in get_wax_mold_templates():
@@ -36,17 +149,22 @@ class TestVirtualExperienceDesignFreedom:
             assert len(template["param_ranges"]) >= 1, (
                 f"{template['id']} 至少应定义1个可调参数"
             )
+            numeric_param_count = 0
             for param_name, prange in template["param_ranges"].items():
-                assert "min" in prange, f"{template['id']}.{param_name} 缺少 min"
-                assert "max" in prange, f"{template['id']}.{param_name} 缺少 max"
-                assert prange["max"] > prange["min"], (
-                    f"{template['id']}.{param_name} max 应大于 min"
-                )
+                if isinstance(prange, dict) and "min" in prange:
+                    numeric_param_count += 1
+                    assert "max" in prange, f"{template['id']}.{param_name} 缺少 max"
+                    assert prange["max"] > prange["min"], (
+                        f"{template['id']}.{param_name} max 应大于 min"
+                    )
+            assert numeric_param_count >= 3, f"{template['id']} 数值参数不足"
 
     def test_template_default_params_within_ranges(self):
-        """边界用例：所有默认参数值均在参数范围内"""
+        """边界用例：所有数值型默认参数值均在参数范围内"""
         for template in get_wax_mold_templates():
             for param_name, prange in template["param_ranges"].items():
+                if not isinstance(prange, dict) or "min" not in prange:
+                    continue
                 default_val = template["default_params"].get(param_name)
                 assert default_val is not None, (
                     f"{template['id']} 缺少 {param_name} 的默认值"

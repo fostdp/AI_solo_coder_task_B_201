@@ -7,6 +7,10 @@ from permeability_analysis.analyzer import (
     calculate_permeability_impact,
     compare_permeability_scenarios,
     PERMEABILITY_RANGE,
+    PERMEABILITY_MEASUREMENT_REFERENCES,
+    GAS_POROSITY_MODEL_COEFFICIENTS,
+    SHELL_MATERIAL_PERMEABILITY,
+    _get_alloy_coefficients,
 )
 from permeability_analysis.service import permeability_service
 
@@ -25,6 +29,81 @@ class TestPermeabilityAnalysisGasPorosity:
         ]
         for key in required_keys:
             assert key in result, f"缺少关键字段: {key}"
+
+    def test_measurement_references_complete(self):
+        """正常用例：实测数据引用数据库完整"""
+        refs = PERMEABILITY_MEASUREMENT_REFERENCES
+        assert "measurements" in refs
+        assert len(refs["measurements"]) >= 3
+        for measurement in refs["measurements"]:
+            assert "citation" in measurement
+            assert "description" in measurement
+            if "measured_data_points" in measurement:
+                for dp in measurement["measured_data_points"]:
+                    assert "permeability" in dp
+                    assert "gas_porosity" in dp
+
+    def test_uncertainty_statement_provided(self):
+        """正常用例：提供模型不确定性说明"""
+        refs = PERMEABILITY_MEASUREMENT_REFERENCES
+        assert "uncertainty_statement" in refs
+        assert "±15%" in refs["uncertainty_statement"]
+
+    def test_model_coefficients_for_multiple_alloys(self):
+        """正常用例：多种合金的模型系数已校准"""
+        coeffs = GAS_POROSITY_MODEL_COEFFICIENTS
+        required_alloys = ["bronze", "steel", "aluminum"]
+        for alloy in required_alloys:
+            found = False
+            for key in coeffs:
+                if alloy in key:
+                    found = True
+                    assert "A" in coeffs[key]
+                    assert "k" in coeffs[key]
+                    assert "B" in coeffs[key]
+                    assert "R_squared" in coeffs[key]
+                    assert coeffs[key]["R_squared"] >= 0.9
+            assert found, f"缺少 {alloy} 合金的系数"
+
+    def test_shell_material_permeability_values(self):
+        """正常用例：各型壳材料透气性值在合理范围"""
+        sm = SHELL_MATERIAL_PERMEABILITY
+        assert "ancient_mud" in sm
+        assert "water_glass" in sm
+        assert "silica_sol" in sm
+        assert "ethyl_silicate" in sm
+        perms = [v["permeability"] for v in sm.values()]
+        assert perms == sorted(perms), "型壳透气性应有序递增"
+        assert sm["ancient_mud"]["permeability"] < sm["ethyl_silicate"]["permeability"]
+
+    def test_get_alloy_coefficients_returns_valid(self):
+        """正常用例：获取合金系数函数返回有效数据"""
+        bronze_coeff = _get_alloy_coefficients("bronze")
+        assert "A" in bronze_coeff
+        assert 0.05 <= bronze_coeff["A"] <= 0.20
+        assert 0.04 <= bronze_coeff["k"] <= 0.08
+        assert 0 <= bronze_coeff["B"] <= 0.05
+
+    def test_model_calibration_against_measured_data(self):
+        """边界用例：模型预测值与实测数据偏差在允许范围内"""
+        measured_points = [
+            (15, 5.2),
+            (30, 2.3),
+            (50, 0.9),
+            (65, 0.55),
+            (80, 0.40),
+        ]
+        result = calculate_permeability_impact(alloy_type="bronze", pouring_temp=1180)
+        perms = result["permeability_values"]
+        gas = result["gas_porosity_rates_percent"]
+        for perm_meas, gas_meas in measured_points:
+            closest_idx = min(range(len(perms)), key=lambda i: abs(perms[i] - perm_meas))
+            predicted = gas[closest_idx]
+            relative_error = abs(predicted - gas_meas) / max(gas_meas, 0.01)
+            assert relative_error < 0.25, (
+                f"透气性 {perm_meas}: 预测 {predicted:.2f} vs 实测 {gas_meas:.2f}, "
+                f"误差 {relative_error*100:.1f}% 超过允许范围"
+            )
 
     def test_permeability_range_consistent(self):
         """正常用例：透气性值数组与参数范围一致"""

@@ -9,6 +9,10 @@ from .wax_mold_engine import (
     save_virtual_experiment,
     list_virtual_experiments,
     get_virtual_experiment,
+    get_simple_mode_presets,
+    get_simple_mode_params,
+    apply_simple_mode_params,
+    apply_preset,
 )
 
 
@@ -27,6 +31,29 @@ class VirtualExperienceService:
 
     def list_shells(self) -> List[Dict[str, Any]]:
         return get_shell_materials()
+
+    def get_simple_presets(self) -> List[Dict[str, Any]]:
+        return get_simple_mode_presets()
+
+    def get_simple_params(self) -> Dict[str, Any]:
+        return get_simple_mode_params()
+
+    def apply_simple_mode(
+        self,
+        template_id: str,
+        size_level: int = 3,
+        ornament_level: int = 3,
+        thickness_level: int = 3,
+    ) -> Dict[str, Any]:
+        return apply_simple_mode_params(
+            template_id=template_id,
+            size_level=size_level,
+            ornament_level=ornament_level,
+            thickness_level=thickness_level,
+        )
+
+    def apply_preset(self, template_id: str, preset_id: str) -> Dict[str, Any]:
+        return apply_preset(template_id=template_id, preset_id=preset_id)
 
     def generate_geometry(self, template_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
         return generate_model_geometry(template_id, params)

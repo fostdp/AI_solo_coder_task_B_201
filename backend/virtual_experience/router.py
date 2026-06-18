@@ -17,6 +17,18 @@ class SimulateCastingRequest(BaseModel):
     pouring_temp: Optional[float] = None
 
 
+class SimpleModeRequest(BaseModel):
+    template_id: str
+    size_level: int = 3
+    ornament_level: int = 3
+    thickness_level: int = 3
+
+
+class ApplyPresetRequest(BaseModel):
+    template_id: str
+    preset_id: str
+
+
 router = APIRouter(prefix="/api/virtual", tags=["Virtual Experience"])
 
 
@@ -41,6 +53,40 @@ async def list_materials():
 @router.get("/shells")
 async def list_shells():
     return virtual_service.list_shells()
+
+
+@router.get("/simple-presets")
+async def get_simple_presets():
+    return virtual_service.get_simple_presets()
+
+
+@router.get("/simple-params")
+async def get_simple_params():
+    return virtual_service.get_simple_params()
+
+
+@router.post("/apply-simple-mode")
+async def apply_simple_mode(req: SimpleModeRequest):
+    result = virtual_service.apply_simple_mode(
+        template_id=req.template_id,
+        size_level=req.size_level,
+        ornament_level=req.ornament_level,
+        thickness_level=req.thickness_level,
+    )
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
+@router.post("/apply-preset")
+async def apply_preset(req: ApplyPresetRequest):
+    result = virtual_service.apply_preset(
+        template_id=req.template_id,
+        preset_id=req.preset_id,
+    )
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
 
 
 @router.post("/geometry")

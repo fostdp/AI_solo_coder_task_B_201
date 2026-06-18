@@ -6,6 +6,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from craft_comparison.crafts_data import (
     ANCIENT_CRAFTS,
     MODERN_CRAFTS,
+    ARCHAEOLOGICAL_SOURCES,
+    NATIONAL_STANDARDS,
     get_ancient_crafts,
     get_modern_crafts,
     get_all_crafts,
@@ -39,6 +41,37 @@ class TestCraftComparisonDefectRates:
         for craft in all_crafts:
             for field in required_fields:
                 assert field in craft, f"工艺 {craft.get('id')} 缺少字段 {field}"
+
+    def test_ancient_crafts_have_archaeological_references(self):
+        """正常用例：古代工艺均关联考古文献来源"""
+        ancient = get_ancient_crafts()
+        for craft in ancient:
+            assert "archaeological_sources" in craft, f"{craft['id']} 缺少考古来源"
+            assert len(craft["archaeological_sources"]) >= 1
+            for src in craft["archaeological_sources"]:
+                assert src in ARCHAEOLOGICAL_SOURCES, f"未知来源 {src}"
+
+    def test_ancient_crafts_have_measured_validation_data(self):
+        """正常用例：古代工艺包含考古实测验证数据"""
+        ancient = get_ancient_crafts()
+        validation_fields = [
+            "restored_defect_rate", "measured_surface_roughness",
+            "wall_thickness_min_record", "dimensional_tolerance",
+        ]
+        for craft in ancient:
+            assert "historical_experiment_validation" in craft
+            val = craft["historical_experiment_validation"]
+            for field in validation_fields:
+                assert field in val, f"{craft['id']} 缺少 {field}"
+
+    def test_archaeological_sources_complete(self):
+        """正常用例：考古文献数据库完整"""
+        assert len(ARCHAEOLOGICAL_SOURCES) >= 5
+        for key, src in ARCHAEOLOGICAL_SOURCES.items():
+            assert "citation" in src
+            assert "description" in src
+            assert "year" in src
+            assert 1980 <= src["year"] <= 2025
 
     def test_defect_rates_within_valid_range(self):
         """边界用例：所有缺陷率均在 [0, 1] 有效范围内"""
@@ -222,6 +255,54 @@ class TestAncientVsModernSurfaceRoughness:
         """正常用例：洞察结论列表不为空"""
         result = craft_service.ancient_vs_modern_comparison()
         assert len(result["key_insights"]) >= 3
+
+    def test_modern_craft_has_standard_compliance(self):
+        """正常用例：现代工艺包含国家标准符合性声明"""
+        modern = get_craft_by_id("modern_investment_casting")
+        assert "standard_compliance" in modern
+        sc = modern["standard_compliance"]
+        assert "dimensional_tolerance_standard" in sc
+        assert "surface_roughness_standard" in sc
+        assert "ct_grade_range" in sc
+        assert "CT4" in sc["ct_grade_range"] or "CT5" in sc["ct_grade_range"]
+
+    def test_national_standards_database_complete(self):
+        """正常用例：国家标准数据库完整"""
+        assert len(NATIONAL_STANDARDS) >= 3
+        assert "gb_t_14235" in NATIONAL_STANDARDS
+        assert "gb_t_15056" in NATIONAL_STANDARDS
+        assert "iso_8062" in NATIONAL_STANDARDS
+        for key, std in NATIONAL_STANDARDS.items():
+            assert "citation" in std
+            assert "description" in std
+
+    def test_modern_process_parameters_classified(self):
+        """正常用例：现代工艺按型壳类型分类给出参数"""
+        modern = get_craft_by_id("modern_investment_casting")
+        assert "standard_specific_parameters" in modern
+        sp = modern["standard_specific_parameters"]
+        assert "silica_sol_process" in sp
+        assert "sodium_silicate_process" in sp
+        for proc_name, proc_data in sp.items():
+            assert "ct_grade" in proc_data
+            assert "surface_roughness_ra" in proc_data
+            assert "dimensional_accuracy_100mm" in proc_data
+
+    def test_modern_accuracy_matches_standard(self):
+        """边界用例：现代工艺尺寸精度符合 CT4-CT6 等级"""
+        modern = get_craft_by_id("modern_investment_casting")
+        accuracy = modern["dimensional_accuracy_mm"]
+        assert 0.1 <= accuracy <= 0.8, (
+            f"CT4-CT6 精度应在 0.1-0.8mm 范围内，实际为 {accuracy}"
+        )
+
+    def test_modern_roughness_matches_silica_sol_process(self):
+        """边界用例：现代表面粗糙度符合硅溶胶工艺范围"""
+        modern = get_craft_by_id("modern_investment_casting")
+        ra = modern["surface_roughness_ra"]
+        assert 0.8 <= ra <= 3.2, (
+            f"硅溶胶工艺粗糙度应在 Ra 0.8-3.2 范围内，实际为 {ra}"
+        )
 
 
 def run_tests():

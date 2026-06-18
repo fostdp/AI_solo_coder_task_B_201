@@ -5,12 +5,93 @@ from datetime import datetime
 import numpy as np
 
 
+SIMPLE_MODE_PRESETS = {
+    "delicate": {
+        "id": "delicate",
+        "name": "精致小巧",
+        "description": "体型小巧，纹饰细腻，适合把玩观赏",
+        "icon": "✨",
+        "scaling_factors": {
+            "height": 0.7,
+            "diameter": 0.7,
+            "wall_thickness": 0.8,
+            "pattern_count": 1.2,
+        },
+    },
+    "balanced": {
+        "id": "balanced",
+        "name": "经典均衡",
+        "description": "比例协调，庄重典雅，仿古标准样式",
+        "icon": "⚖️",
+        "scaling_factors": {
+            "height": 1.0,
+            "diameter": 1.0,
+            "wall_thickness": 1.0,
+            "pattern_count": 1.0,
+        },
+    },
+    "grand": {
+        "id": "grand",
+        "name": "庄重敦厚",
+        "description": "体型宏大，壁厚扎实，器型沉稳有分量",
+        "icon": "🏛️",
+        "scaling_factors": {
+            "height": 1.3,
+            "diameter": 1.3,
+            "wall_thickness": 1.3,
+            "pattern_count": 0.8,
+        },
+    },
+    "intricate": {
+        "id": "intricate",
+        "name": "繁复华丽",
+        "description": "纹饰密布，精巧绝伦，挑战工艺极限",
+        "icon": "🌸",
+        "scaling_factors": {
+            "height": 1.0,
+            "diameter": 1.0,
+            "wall_thickness": 0.7,
+            "pattern_count": 1.5,
+        },
+    },
+}
+
+
+SIMPLE_MODE_PARAMS = {
+    "size": {
+        "min": 1,
+        "max": 5,
+        "step": 1,
+        "default": 3,
+        "label": "整体尺寸",
+        "hint": "1=小巧, 5=宏大",
+    },
+    "ornament": {
+        "min": 1,
+        "max": 5,
+        "step": 1,
+        "default": 3,
+        "label": "纹饰程度",
+        "hint": "1=素面, 5=繁缛",
+    },
+    "thickness": {
+        "min": 1,
+        "max": 5,
+        "step": 1,
+        "default": 3,
+        "label": "壁厚程度",
+        "hint": "1=轻薄, 5=厚重",
+    },
+}
+
+
 WAX_MOLD_TEMPLATES: Dict[str, Dict[str, Any]] = {
     "zunpan": {
         "id": "zunpan",
         "name": "尊盘",
         "category": "青铜器",
         "difficulty": 5,
+        "audience": "all",
         "description": "曾侯乙尊盘样式，多层浮雕纹饰，工艺复杂",
         "default_params": {
             "height": 120.0,
@@ -23,11 +104,14 @@ WAX_MOLD_TEMPLATES: Dict[str, Dict[str, Any]] = {
             "has_dragons": True,
         },
         "param_ranges": {
-            "height": {"min": 80.0, "max": 200.0, "step": 5.0, "label": "高度 (mm)"},
-            "diameter": {"min": 100.0, "max": 250.0, "step": 5.0, "label": "直径 (mm)"},
-            "wall_thickness": {"min": 2.0, "max": 10.0, "step": 0.5, "label": "壁厚 (mm)"},
-            "pattern_count": {"min": 8.0, "max": 32.0, "step": 2.0, "label": "纹饰数量"},
-            "pattern_depth": {"min": 0.5, "max": 3.0, "step": 0.5, "label": "纹饰深度 (mm)"},
+            "height": {"min": 80.0, "max": 200.0, "step": 5.0, "label": "高度 (mm)", "expert_only": False},
+            "diameter": {"min": 100.0, "max": 250.0, "step": 5.0, "label": "直径 (mm)", "expert_only": False},
+            "wall_thickness": {"min": 2.0, "max": 10.0, "step": 0.5, "label": "壁厚 (mm)", "expert_only": False},
+            "pattern_count": {"min": 8.0, "max": 32.0, "step": 2.0, "label": "纹饰数量", "expert_only": True},
+            "pattern_depth": {"min": 0.5, "max": 3.0, "step": 0.5, "label": "纹饰深度 (mm)", "expert_only": True},
+            "has_rim": {"expert_only": True, "label": "带口缘"},
+            "has_foot": {"expert_only": True, "label": "带圈足"},
+            "has_dragons": {"expert_only": True, "label": "带龙形饰"},
         },
         "historical_note": "曾侯乙尊盘是战国早期青铜器，以其繁复精美的失蜡法铸造工艺闻名于世。",
     },
@@ -36,6 +120,7 @@ WAX_MOLD_TEMPLATES: Dict[str, Dict[str, Any]] = {
         "name": "圆鼎",
         "category": "青铜器",
         "difficulty": 3,
+        "audience": "all",
         "description": "三足圆鼎，典型礼器，造型庄重",
         "default_params": {
             "height": 180.0,
@@ -46,9 +131,12 @@ WAX_MOLD_TEMPLATES: Dict[str, Dict[str, Any]] = {
             "decorated_body": True,
         },
         "param_ranges": {
-            "height": {"min": 100.0, "max": 300.0, "step": 10.0, "label": "高度 (mm)"},
-            "diameter": {"min": 80.0, "max": 200.0, "step": 5.0, "label": "口径 (mm)"},
-            "wall_thickness": {"min": 3.0, "max": 12.0, "step": 1.0, "label": "壁厚 (mm)"},
+            "height": {"min": 100.0, "max": 300.0, "step": 10.0, "label": "高度 (mm)", "expert_only": False},
+            "diameter": {"min": 80.0, "max": 200.0, "step": 5.0, "label": "口径 (mm)", "expert_only": False},
+            "wall_thickness": {"min": 3.0, "max": 12.0, "step": 1.0, "label": "壁厚 (mm)", "expert_only": False},
+            "leg_count": {"expert_only": True, "label": "鼎足数量"},
+            "has_handles": {"expert_only": True, "label": "带立耳"},
+            "decorated_body": {"expert_only": True, "label": "腹部纹饰"},
         },
         "historical_note": "鼎是古代最重要的礼器之一，象征权力与地位。司母戊鼎是迄今发现最大的青铜器。",
     },
@@ -57,6 +145,7 @@ WAX_MOLD_TEMPLATES: Dict[str, Dict[str, Any]] = {
         "name": "铜壶",
         "category": "青铜器",
         "difficulty": 3,
+        "audience": "all",
         "description": "盛酒器，鼓腹长颈，造型优雅",
         "default_params": {
             "height": 200.0,
@@ -67,9 +156,12 @@ WAX_MOLD_TEMPLATES: Dict[str, Dict[str, Any]] = {
             "has_ring_foot": True,
         },
         "param_ranges": {
-            "height": {"min": 100.0, "max": 350.0, "step": 10.0, "label": "高度 (mm)"},
-            "body_diameter": {"min": 60.0, "max": 180.0, "step": 5.0, "label": "腹径 (mm)"},
-            "wall_thickness": {"min": 2.0, "max": 8.0, "step": 0.5, "label": "壁厚 (mm)"},
+            "height": {"min": 100.0, "max": 350.0, "step": 10.0, "label": "高度 (mm)", "expert_only": False},
+            "body_diameter": {"min": 60.0, "max": 180.0, "step": 5.0, "label": "腹径 (mm)", "expert_only": False},
+            "wall_thickness": {"min": 2.0, "max": 8.0, "step": 0.5, "label": "壁厚 (mm)", "expert_only": False},
+            "neck_diameter": {"expert_only": True, "label": "颈径 (mm)"},
+            "has_cover": {"expert_only": True, "label": "带盖"},
+            "has_ring_foot": {"expert_only": True, "label": "带圈足"},
         },
         "historical_note": "铜壶是古代盛酒或盛水器，常饰有精美的错金银或镶嵌工艺。",
     },
@@ -78,6 +170,7 @@ WAX_MOLD_TEMPLATES: Dict[str, Dict[str, Any]] = {
         "name": "指环",
         "category": "饰品",
         "difficulty": 1,
+        "audience": "beginner",
         "description": "简单的指环造型，适合初学者体验",
         "default_params": {
             "diameter": 20.0,
@@ -87,9 +180,11 @@ WAX_MOLD_TEMPLATES: Dict[str, Dict[str, Any]] = {
             "pattern_type": "twist",
         },
         "param_ranges": {
-            "diameter": {"min": 15.0, "max": 25.0, "step": 0.5, "label": "内径 (mm)"},
-            "band_width": {"min": 3.0, "max": 12.0, "step": 0.5, "label": "戒面宽度 (mm)"},
-            "thickness": {"min": 1.0, "max": 4.0, "step": 0.5, "label": "厚度 (mm)"},
+            "diameter": {"min": 15.0, "max": 25.0, "step": 0.5, "label": "内径 (mm)", "expert_only": False},
+            "band_width": {"min": 3.0, "max": 12.0, "step": 0.5, "label": "戒面宽度 (mm)", "expert_only": False},
+            "thickness": {"min": 1.0, "max": 4.0, "step": 0.5, "label": "厚度 (mm)", "expert_only": False},
+            "has_pattern": {"expert_only": True, "label": "带纹饰"},
+            "pattern_type": {"expert_only": True, "label": "纹饰类型"},
         },
         "historical_note": "指环是人类最早的饰品之一，古代指环多用玉石或金属制成。",
     },
@@ -98,6 +193,7 @@ WAX_MOLD_TEMPLATES: Dict[str, Dict[str, Any]] = {
         "name": "挂坠",
         "category": "饰品",
         "difficulty": 2,
+        "audience": "beginner",
         "description": "带孔的小挂坠，可穿绳佩戴",
         "default_params": {
             "height": 30.0,
@@ -108,13 +204,89 @@ WAX_MOLD_TEMPLATES: Dict[str, Dict[str, Any]] = {
             "has_pattern": True,
         },
         "param_ranges": {
-            "height": {"min": 15.0, "max": 60.0, "step": 2.0, "label": "高度 (mm)"},
-            "width": {"min": 10.0, "max": 40.0, "step": 2.0, "label": "宽度 (mm)"},
-            "thickness": {"min": 1.0, "max": 6.0, "step": 0.5, "label": "厚度 (mm)"},
+            "height": {"min": 15.0, "max": 60.0, "step": 2.0, "label": "高度 (mm)", "expert_only": False},
+            "width": {"min": 10.0, "max": 40.0, "step": 2.0, "label": "宽度 (mm)", "expert_only": False},
+            "thickness": {"min": 1.0, "max": 6.0, "step": 0.5, "label": "厚度 (mm)", "expert_only": False},
+            "hole_diameter": {"expert_only": True, "label": "穿孔直径"},
+            "shape": {"expert_only": True, "label": "外形"},
+            "has_pattern": {"expert_only": True, "label": "带纹饰"},
         },
         "historical_note": "挂坠是古代常见的佩饰，材质多样，常刻有吉祥图案或文字。",
     },
 }
+
+
+def get_simple_mode_presets() -> List[Dict[str, Any]]:
+    return list(SIMPLE_MODE_PRESETS.values())
+
+
+def get_simple_mode_params() -> Dict[str, Any]:
+    return SIMPLE_MODE_PARAMS
+
+
+def apply_simple_mode_params(
+    template_id: str,
+    size_level: int = 3,
+    ornament_level: int = 3,
+    thickness_level: int = 3,
+) -> Dict[str, Any]:
+    template = WAX_MOLD_TEMPLATES.get(template_id)
+    if not template:
+        return {"error": f"Template {template_id} not found"}
+
+    size_factor = 0.6 + (size_level - 1) * 0.2
+    ornament_factor = 0.5 + (ornament_level - 1) * 0.25
+    thickness_factor = 0.6 + (thickness_level - 1) * 0.2
+
+    defaults = template["default_params"]
+    params = {}
+
+    for key, value in defaults.items():
+        if isinstance(value, bool):
+            if key in ("has_pattern", "decorated_body", "has_dragons"):
+                params[key] = ornament_level >= 3
+            else:
+                params[key] = value
+        elif isinstance(value, (int, float)):
+            if "height" in key or "diameter" in key or "width" in key:
+                params[key] = round(value * size_factor, 1)
+            elif "thickness" in key or key == "thickness":
+                params[key] = round(value * thickness_factor, 1)
+            elif "pattern" in key and "count" in key:
+                params[key] = int(value * ornament_factor)
+            elif "pattern" in key and "depth" in key:
+                params[key] = round(value * (0.5 + ornament_factor * 0.5), 1)
+            else:
+                params[key] = value
+        else:
+            params[key] = value
+
+    return params
+
+
+def apply_preset(template_id: str, preset_id: str) -> Dict[str, Any]:
+    template = WAX_MOLD_TEMPLATES.get(template_id)
+    preset = SIMPLE_MODE_PRESETS.get(preset_id)
+    if not template or not preset:
+        return {"error": f"Template {template_id} or preset {preset_id} not found"}
+
+    defaults = template["default_params"]
+    factors = preset["scaling_factors"]
+    params = {}
+
+    for key, value in defaults.items():
+        if isinstance(value, bool):
+            params[key] = value
+        elif isinstance(value, (int, float)):
+            factor = factors.get(key, 1.0)
+            if isinstance(value, int):
+                params[key] = int(value * factor)
+            else:
+                params[key] = round(value * factor, 1)
+        else:
+            params[key] = value
+
+    return params
 
 
 CASTING_MATERIALS: Dict[str, Dict[str, Any]] = {
